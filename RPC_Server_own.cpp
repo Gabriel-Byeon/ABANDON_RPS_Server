@@ -109,7 +109,7 @@ int main(int argc, char* argv[]) {
         int clientHand;
         recv(clientSocket, (char*)&clientHand, sizeof(clientHand), 0);
 
-        //std::cout << "상대방이 선택한 것: ";
+        std::cout << "상대방이 선택한 것: ";
         if (clientHand == 0) {
             std::cout << "가위";
         }
@@ -128,7 +128,10 @@ int main(int argc, char* argv[]) {
         std::cout << std::endl;
 
         // 게임 결과 전송
-        if (serverHand == clientHand) {
+        if (clientHand == '4') {
+            break;
+        }
+        else if (serverHand == clientHand) {
             Att = 0;  // 무승부
             retry = 1;
         }
@@ -156,32 +159,36 @@ int main(int argc, char* argv[]) {
 
         char result[50];
 
-        if (Att == 1) {
-            if (serverChoice == (clientChoice - '0')) {
-                strcpy_s(result, "패배!");
-                //howmanylose++;
+        if ((clientChoice != '3') && (clientChoice != '4')) {
+            if (Att == 1) {
+                if (serverChoice == (clientChoice - '0')) {
+                    strcpy_s(result, "패배!");
+                }
+                else if ((serverChoice + 1) % 3 == (clientChoice - '0')) {
+                    strcpy_s(result, "공수 유지");
+                }
+                else {
+                    strcpy_s(result, "공수 교대");
+                    Att = -1;
+                }
             }
-            else if ((serverChoice + 1) % 3 == (clientChoice - '0')) {
-                strcpy_s(result, "공수 유지");
-            }
-            else {
-                strcpy_s(result, "공수 교대");
-                Att = -1;
+            else if (Att == -1) {
+                if (serverChoice == (clientChoice - '0')) {
+                    strcpy_s(result, "승리!");
+                    howmanywin++;
+                }
+                else if ((serverChoice + 1) % 3 == (clientChoice - '0')) {
+                    strcpy_s(result, "공수 교대");
+                    Att = 1;
+                }
+                else {
+                    strcpy_s(result, "공수 유지");
+                }
             }
         }
-        else if (Att == -1) {
-            if (serverChoice == (clientChoice - '0')) {
-                strcpy_s(result, "승리!");
-                //howmanywin++;
-            }
-            else if ((serverChoice + 1) % 3 == (clientChoice - '0')) {
-                strcpy_s(result, "공수 교대");
-                Att = 1;
-            }
-            else {
-                strcpy_s(result, "공수 유지");
-            }
-        }
+        else if (clientChoice == '4')
+            break;
+        
 
         count++;
         
