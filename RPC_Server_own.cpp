@@ -98,7 +98,7 @@ int main(int argc, char* argv[]) {
     // 가위 바위 보 게임
     int retry = 1;
     int Att = 0, count = 0;
-    int howmanywin = 0;
+    int howmanywin = 0, howmanylose = 0;
 
     while (retry == 1) {
 
@@ -159,44 +159,33 @@ int main(int argc, char* argv[]) {
 
         char result[50];
 
-        if ((clientChoice != '3') && (clientChoice != '4')) {
-            if (Att == 1) {
-                if (serverChoice == (clientChoice - '0')) {
-                    strcpy_s(result, "패배!");
-                }
-                else if ((serverChoice + 1) % 3 == (clientChoice - '0')) {
-                    strcpy_s(result, "공수 유지");
-                }
-                else {
-                    strcpy_s(result, "공수 교대");
-                    Att = -1;
-                }
+        if (Att == 1) {
+            if (serverChoice == (clientChoice - '0')) {
+                strcpy_s(result, "패배!");
+                howmanylose++;
             }
-            else if (Att == -1) {
-                if (serverChoice == (clientChoice - '0')) {
-                    strcpy_s(result, "승리!");
-                    howmanywin++;
-                }
-                else if ((serverChoice + 1) % 3 == (clientChoice - '0')) {
-                    strcpy_s(result, "공수 교대");
-                    Att = 1;
-                }
-                else {
-                    strcpy_s(result, "공수 유지");
-                }
+            else if ((serverChoice + 1) % 3 == (clientChoice - '0')) {
+                strcpy_s(result, "공수 유지");
+            }
+            else {
+                strcpy_s(result, "공수 교대");
+                Att = -1;
             }
         }
-        else if (clientChoice == '4')
-            break;
-        
-
-        count++;
-        
-        //float winrate_server = howmanylose / count;
-        //float winrate_client = howmanywin / count;
-        
+        else if (Att == -1) {
+            if (serverChoice == (clientChoice - '0')) {
+                strcpy_s(result, "승리!");
+                howmanywin++;
+            }
+            else if ((serverChoice + 1) % 3 == (clientChoice - '0')) {
+                strcpy_s(result, "공수 교대");
+                Att = 1;
+            }
+            else {
+                strcpy_s(result, "공수 유지");
+            }
+        }
         send(clientSocket, result, sizeof(result), 0);
-        //send(clientSocket, (char*)&winrate_server, sizeof(winrate_server), 0);
 
         char playAgain;
         recv(clientSocket, &playAgain, sizeof(playAgain), 0);
