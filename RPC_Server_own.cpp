@@ -159,66 +159,72 @@ int main(int argc, char* argv[]) {
         char clientChoice;
         recv(clientSocket, &clientChoice, sizeof(clientChoice), 0);
 
-        std::cout << "서버가 선택한 것: ";
-        if (serverChoice == 0) {
-            std::cout << "묵      ";
+        if (clientChoice == '4') {        // 종료 요청
+            break;
         }
-        else if (serverChoice == 1) {
-            std::cout << "찌      ";
-        }
-        else if (serverChoice == 2) {
-            std::cout << "빠      ";
-        }
-        std::cout << "클라이언트가 선택한 것: ";
-        if (clientChoice == '0') {
-            std::cout << "묵";
-        }
-        else if (clientChoice == '1') {
-            std::cout << "찌";
-        }
-        else if (clientChoice == '2') {
-            std::cout << "빠";
-        }
-        std::cout << std::endl;
+        else {
+            std::cout << "서버가 선택한 것: ";
+            if (serverChoice == 0) {
+                std::cout << "묵      ";
+            }
+            else if (serverChoice == 1) {
+                std::cout << "찌      ";
+            }
+            else if (serverChoice == 2) {
+                std::cout << "빠      ";
+            }
+            std::cout << "클라이언트가 선택한 것: ";
+            if (clientChoice == '0') {
+                std::cout << "묵";
+            }
+            else if (clientChoice == '1') {
+                std::cout << "찌";
+            }
+            else if (clientChoice == '2') {
+                std::cout << "빠";
+            }
+            std::cout << std::endl;
 
-        char result[50];
+            char result[50];
 
-        if (Att == 1) {
-            if (serverChoice == (clientChoice - '0')) {
-                strcpy_s(result, "패배!");
-                howmanylose++;
+            if (Att == 1) {
+                if (serverChoice == (clientChoice - '0')) {
+                    strcpy_s(result, "패배!");
+                    howmanylose++;
+                }
+                else if ((serverChoice + 1) % 3 == (clientChoice - '0')) {
+                    strcpy_s(result, "공수 유지");
+                }
+                else {
+                    strcpy_s(result, "공수 교대");
+                    Att = -1;
+                }
             }
-            else if ((serverChoice + 1) % 3 == (clientChoice - '0')) {
-                strcpy_s(result, "공수 유지");
+            else if (Att == -1) {
+                if (serverChoice == (clientChoice - '0')) {
+                    strcpy_s(result, "승리!");
+                    howmanywin++;
+                }
+                else if ((serverChoice + 1) % 3 == (clientChoice - '0')) {
+                    strcpy_s(result, "공수 교대");
+                    Att = 1;
+                }
+                else {
+                    strcpy_s(result, "공수 유지");
+                }
             }
-            else {
-                strcpy_s(result, "공수 교대");
-                Att = -1;
-            }
+            std::cout << "결과: " << result << std::endl;
+
+            send(clientSocket, result, sizeof(result), 0);
         }
-        else if (Att == -1) {
-            if (serverChoice == (clientChoice - '0')) {
-                strcpy_s(result, "승리!");
-                howmanywin++;
-            }
-            else if ((serverChoice + 1) % 3 == (clientChoice - '0')) {
-                strcpy_s(result, "공수 교대");
-                Att = 1;
-            }
-            else {
-                strcpy_s(result, "공수 유지");
-            }
-        }
-        std::cout << "결과: " << result << std::endl;
+        
 
-        send(clientSocket, result, sizeof(result), 0);
-
-        char playAgain;
+        /*char playAgain;
         recv(clientSocket, &playAgain, sizeof(playAgain), 0);
 
         if (playAgain != 'y') {
             break;
-        }
+        }*/
     }
 
     // 소켓 및 서버 소켓 닫기
