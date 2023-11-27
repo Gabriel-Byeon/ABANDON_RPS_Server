@@ -103,7 +103,7 @@ int main(int argc, char* argv[]) {
     while (retry == 1) {
 
         std::cout << "가위 바위 보 게임을 시작합니다." << std::endl;
-        std::cout << "가위(0), 바위(1), 보(2) 중 하나를 선택하세요(승률 (3), 종료 (4)): ";
+        std::cout << "가위(0), 바위(1), 보(2) 중 하나를 선택하세요(승률 (3), 종료 (4)): " << std::endl;
 
         int serverHand = rand() % 3;  // 0: 가위, 1: 바위, 2: 보
         int clientHand;
@@ -133,17 +133,19 @@ int main(int argc, char* argv[]) {
         }
         else if (serverHand == clientHand) {
             Att = 0;  // 무승부
+            std::cout << "무승부입니다." << std::endl;
             retry = 1;
         }
         else if ((serverHand + 1) % 3 == clientHand) {
             Att = 1;  // 서버 승리
+            std::cout << "서버가 이겼습니다." << std::endl;
             retry = 0;
         }
         else {
             Att = -1;  // 클라이언트 승리
+            std::cout << "클라이언트가 이겼습니다." << std::endl;
             retry = 0;
         }
-
         send(clientSocket, (char*)&Att, sizeof(Att), 0);
     }
     
@@ -156,6 +158,28 @@ int main(int argc, char* argv[]) {
 
         char clientChoice;
         recv(clientSocket, &clientChoice, sizeof(clientChoice), 0);
+
+        std::cout << "서버가 선택한 것: ";
+        if (serverChoice == 0) {
+            std::cout << "묵      ";
+        }
+        else if (serverChoice == 1) {
+            std::cout << "찌      ";
+        }
+        else if (serverChoice == 2) {
+            std::cout << "빠      ";
+        }
+        std::cout << "클라이언트가 선택한 것: ";
+        if (clientChoice == '0') {
+            std::cout << "묵";
+        }
+        else if (clientChoice == '1') {
+            std::cout << "찌";
+        }
+        else if (clientChoice == '2') {
+            std::cout << "빠";
+        }
+        std::cout << std::endl;
 
         char result[50];
 
@@ -185,6 +209,8 @@ int main(int argc, char* argv[]) {
                 strcpy_s(result, "공수 유지");
             }
         }
+        std::cout << "결과: " << result << std::endl;
+
         send(clientSocket, result, sizeof(result), 0);
 
         char playAgain;
