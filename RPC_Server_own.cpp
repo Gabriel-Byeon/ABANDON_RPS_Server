@@ -1,15 +1,14 @@
-#define _WINSOCK_DEPRECATED_NO_WARNINGS //  최신 VC++ 컴파일시 경고 방지
-#include <iostream> //
-#include <winsock2.h>   // 소켓을 사용하기 위한 헤더 파일, API에서 사용하는 상수, 데이터 유형 및 함수 프로토타입 정의
+#define _WINSOCK_DEPRECATED_NO_WARNINGS
+#include <iostream>
+#include <winsock2.h>
 #include <WS2tcpip.h>
 #include <ctime>
 
-#pragma comment(lib, "ws2_32.lib")  // 위에서 선언한 헤더파일들을 가져다 쓰기위한 링크, ws2_32.lib 라이브러리 파일을 프로그램에 링크하도록 컴파일러에 알리는 pragma 지시어
+#pragma comment(lib, "ws2_32.lib")
 
 #define SERVERPORT 9000
 #define BUFSIZE 512
 
-// 소켓 함수 오류 출력 후 종료
 void err_quit(char* msg)
 {
     LPVOID lpMsgBuf;
@@ -23,7 +22,6 @@ void err_quit(char* msg)
     exit(1);
 }
 
-// 소켓 함수 오류 출력
 void err_display(char* msg)
 {
     LPVOID lpMsgBuf;
@@ -39,21 +37,18 @@ void err_display(char* msg)
 int main(int argc, char* argv[]) {
 
     int retval;
-
-    // 윈속 초기화
     WSADATA wsaData;
+
     if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
         return -1;
 
-    // socket()
-    SOCKET serverSocket = socket(AF_INET, SOCK_STREAM, 0);  // 소켓을 생성하는 함수 호출
+    SOCKET serverSocket = socket(AF_INET, SOCK_STREAM, 0);
     if (serverSocket == INVALID_SOCKET) {
         err_quit("socket()");
         WSACleanup();
         return -1;
     }
 
-    // bind()
     SOCKADDR_IN serverAddress;
     ZeroMemory(&serverAddress, sizeof(serverAddress));
     serverAddress.sin_family = AF_INET;
@@ -66,7 +61,6 @@ int main(int argc, char* argv[]) {
         return -1;
     }
 
-    // listen()
     retval = listen(serverSocket, 5);
     if (retval == SOCKET_ERROR) {
         err_quit("listen()");
@@ -76,13 +70,11 @@ int main(int argc, char* argv[]) {
 
     std::cout << "Server is listening for incoming connections..." << std::endl;
 
-    // 데이터 통신에 사용할 변수
     SOCKET clientSocket;
     SOCKADDR_IN clientaddr;
     int addrlen;
     char buf[BUFSIZE + 1];
 
-    // accept()
     addrlen = sizeof(clientaddr);
     clientSocket = accept(serverSocket, (SOCKADDR*)&clientaddr, &addrlen);
     if (clientSocket == INVALID_SOCKET) {
@@ -91,11 +83,9 @@ int main(int argc, char* argv[]) {
         return -1;
     }
 
-    // 접속한 클라이언트 정보 출력
     printf("\n[TCP 서버] 클라이언트 접속: IP 주소=%s, 포트 번호=%d\n",
         inet_ntoa(clientaddr.sin_addr), ntohs(clientaddr.sin_port));
 
-    // 가위 바위 보 게임
     int retry = 1;
     int Att = 0, count = 0, game1end = 0, endrequest = 0;
     int howmanywin = 0, howmanylose = 0;
@@ -106,7 +96,7 @@ int main(int argc, char* argv[]) {
             std::cout << "가위 바위 보 게임을 시작합니다." << std::endl;
             std::cout << "가위(0), 바위(1), 보(2) 중 하나를 선택하세요: " << std::endl;
 
-            int serverHand = rand() % 3;  // 0: 가위, 1: 바위, 2: 보
+            int serverHand = rand() % 3;
             int clientHand;
             send(clientSocket, (char*)&serverHand, sizeof(serverHand), 0);
             recv(clientSocket, (char*)&clientHand, sizeof(clientHand), 0);
@@ -133,23 +123,22 @@ int main(int argc, char* argv[]) {
             }
             std::cout << std::endl;
 
-            // 게임 결과 전송
             if (clientHand == '4') {
                 endrequest = 1;
                 break;
             }
             else if (serverHand == clientHand) {
-                Att = 0;  // 무승부
+                Att = 0;
                 std::cout << "무승부입니다." << std::endl;
                 retry = 1;
             }
             else if ((serverHand - 1) % 3 == clientHand) {
-                Att = 1;  // 서버 승리
+                Att = 1;
                 std::cout << "서버가 이겼습니다." << std::endl;
                 retry = 0;
             }
             else {
-                Att = -1;  // 클라이언트 승리
+                Att = -1;
                 std::cout << "클라이언트가 이겼습니다." << std::endl;
                 retry = 0;
             }
@@ -157,8 +146,6 @@ int main(int argc, char* argv[]) {
         }
 
         game1end = 0;
-        // 묵찌빠 게임
-        // (묵: 0, 찌: 1, 빠: 2)
         while (!game1end) {
             int serverChoice = rand() % 3;
             send(clientSocket, (char*)&serverChoice, sizeof(serverChoice), 0);
@@ -166,9 +153,17 @@ int main(int argc, char* argv[]) {
             char clientChoice;
             recv(clientSocket, &clientChoice, sizeof(clientChoice), 0);
 
-            if (clientChoice == '4') {        // 종료 요청
+            if (clientChoice == '4') {
                 endrequest = 1;
                 break;
+            }
+            else if (clientChoice == '3') {
+                double winrate = static_cast<double>(howmanywin) / count;
+                double loserate = 1.0 - winrate;
+                send(clientSocket, (char*)&winrate, sizeof(winrate), 0);
+                std::cout << "서버의 승률 : " << loserate << std::endl;
+                std::cout << "클라이언트의 승률 : " << winrate << std::endl;
+                continue;
             }
             else {
                 std::cout << "서버가 선택한 것: ";
@@ -247,9 +242,6 @@ int main(int argc, char* argv[]) {
         }
     }
 
-
-
-    // 소켓 및 서버 소켓 닫기
     closesocket(clientSocket);
     closesocket(serverSocket);
     WSACleanup();
