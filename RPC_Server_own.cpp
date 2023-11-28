@@ -91,6 +91,8 @@ int main(int argc, char* argv[]) {
     int howmanywin = 0, howmanylose = 0;
 
     while (true) {
+        srand(time(NULL));
+
         while (retry) {
 
             std::cout << "가위 바위 보 게임을 시작합니다." << std::endl;
