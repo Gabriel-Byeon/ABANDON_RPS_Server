@@ -101,7 +101,7 @@ int main(int argc, char* argv[]) {
     int howmanywin = 0, howmanylose = 0;
 
     while (true) {
-        while (retry == 1) {
+        while (retry) {
 
             std::cout << "가위 바위 보 게임을 시작합니다." << std::endl;
             std::cout << "가위(0), 바위(1), 보(2) 중 하나를 선택하세요: " << std::endl;
@@ -159,7 +159,7 @@ int main(int argc, char* argv[]) {
         game1end = 0;
         // 묵찌빠 게임
         // (묵: 0, 찌: 1, 빠: 2)
-        while (game1end == 0) {
+        while (!game1end) {
             int serverChoice = rand() % 3;
             send(clientSocket, (char*)&serverChoice, sizeof(serverChoice), 0);
 
@@ -197,10 +197,10 @@ int main(int argc, char* argv[]) {
 
                 if (Att == 1) {
                     if (serverChoice == (clientChoice - '0')) {
-                        strcpy_s(result, "패배!");
+                        strcpy_s(result, "서버 승리! 클라이언트 패배!");
                         game1end = 1;
                         retry = 1;
-                        howmanylose++;
+                        count += 1;
                     }
                     else if ((serverChoice + 1) % 3 == (clientChoice - '0')) {
                         strcpy_s(result, "공수 유지");
@@ -212,10 +212,11 @@ int main(int argc, char* argv[]) {
                 }
                 else if (Att == -1) {
                     if (serverChoice == (clientChoice - '0')) {
-                        strcpy_s(result, "승리!");
+                        strcpy_s(result, "서버 패배! 클라이언트 승리!");
                         game1end = 1;
                         retry = 1;
                         howmanywin++;
+                        count += 1;
                     }
                     else if ((serverChoice + 1) % 3 == (clientChoice - '0')) {
                         strcpy_s(result, "공수 교대");
@@ -226,11 +227,18 @@ int main(int argc, char* argv[]) {
                     }
                 }
                 std::cout << "결과: " << result << std::endl;
-                
+
                 send(clientSocket, result, sizeof(result), 0);
             }
         }
         if (endrequest == 1) {
+            if (count > 0) {
+                double winrate = static_cast<double>(howmanywin) / count;
+                double loserate = 1.0 - winrate;
+                send(clientSocket, (char*)&winrate, sizeof(winrate), 0);
+                std::cout << "서버의 승률 : " << loserate << std::endl;
+                std::cout << "클라이언트의 승률 : " << winrate << std::endl;
+            }
             std::cout << "프로그램을 종료합니다" << std::endl;
             break;
         }
@@ -239,13 +247,12 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    
 
-    // 소켓 및 서버 소켓 닫s기
+
+    // 소켓 및 서버 소켓 닫기
     closesocket(clientSocket);
     closesocket(serverSocket);
     WSACleanup();
 
     return 0;
 }
-
