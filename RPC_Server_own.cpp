@@ -167,6 +167,7 @@ int main(int argc, char* argv[]) {
                 std::cout << "클라이언트의 승률 : " << winrate << std::endl;
                 continue;
             }
+            //++a test
             else {
                 std::cout << "서버가 선택한 것: ";
                 if (serverChoice == 0) {
