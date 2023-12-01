@@ -94,7 +94,7 @@ int main(int argc, char* argv[]) {
     printf("\n[TCP 서버] 클라이언트 접속: IP 주소=%s, 포트 번호=%d\n",
         inet_ntoa(clientaddr.sin_addr), ntohs(clientaddr.sin_port));
 
-    int retry = 1;
+    int retry = 0;
     int Att = 0, count = 0;
     int howmanywin = 0;
 
@@ -122,6 +122,18 @@ int main(int argc, char* argv[]) {
             if (packet.choice_C == END_REQUEST) {
                 packet.end = 1;
                 break;
+            }
+            else if (packet.choice_C == WIN_REQUEST) {
+                if (count > 0) {
+                    packet.winrate = (double)howmanywin / count;
+
+                    send(clientSocket, (char*)&packet, sizeof(Packet), 0);
+                    std::cout << "서버의 승률 : " << 1.0 - packet.winrate << std::endl;
+                    std::cout << "클라이언트의 승률 : " << packet.winrate << std::endl;
+                    continue;
+                }
+                std::cout << "아직 한 판도 안하셨습니다." << std::endl;
+                continue;
             }
 
             std::cout << "서버가 선택한 것: ";
@@ -156,7 +168,7 @@ int main(int argc, char* argv[]) {
                 std::cout << "서버가 공격입니다." << std::endl;
                 retry = 1;
             }
-            else {
+            else if ((serverHand + 2) % 3 == packet.choice_C) {
                 Att = -1;
                 std::cout << "클라이언트가 공격입니다." << std::endl;
                 retry = 1;
@@ -181,11 +193,15 @@ int main(int argc, char* argv[]) {
                 break;
             }
             else if (packet.choice_C == WIN_REQUEST) {
-                packet.winrate = (double)howmanywin / count;
-                
-                send(clientSocket, (char*)&packet, sizeof(Packet), 0);
-                std::cout << "서버의 승률 : " << 1.0 - packet.winrate << std::endl;
-                std::cout << "클라이언트의 승률 : " << packet.winrate << std::endl;
+                if (count > 0) {
+                    packet.winrate = (double)howmanywin / count;
+
+                    send(clientSocket, (char*)&packet, sizeof(Packet), 0);
+                    std::cout << "서버의 승률 : " << 1.0 - packet.winrate << std::endl;
+                    std::cout << "클라이언트의 승률 : " << packet.winrate << std::endl;
+                    continue;
+                }
+                std::cout << "아직 한 판도 안하셨습니다." << std::endl;
                 continue;
             }
             else {
@@ -221,7 +237,6 @@ int main(int argc, char* argv[]) {
                 std::cout << std::endl;
 
                 char result[50];
-
                 if (packet.Att == 1) {
                     if (serverChoice == packet.choice_C) {
                         strcpy_s(result, "서버 승리! 클라이언트 패배!");
@@ -229,11 +244,12 @@ int main(int argc, char* argv[]) {
                         count++;
                     }
                     else if ((serverChoice + 1) % 3 == packet.choice_C) {
-                        strcpy_s(result, "공수 유지");
+                        strcpy_s(result, "공수 유지, 서버 공격중");
+
                     }
-                    else {
-                        strcpy_s(result, "공수 교대");
-                        Att = -1;
+                    else if ((serverChoice + 2) % 3 == packet.choice_C) {
+                        strcpy_s(result, "공수 교대, 클라이언트 공격");
+                        packet.Att = -1;
                     }
                 }
                 else if (packet.Att == -1) {
@@ -244,11 +260,11 @@ int main(int argc, char* argv[]) {
                         count++;
                     }
                     else if ((serverChoice + 1) % 3 == packet.choice_C) {
-                        strcpy_s(result, "공수 교대");
-                        Att = 1;
+                        strcpy_s(result, "공수 교대, 서버 공격");
+                        packet.Att = 1;
                     }
-                    else if ((serverChoice - 1) % 3 == packet.choice_C) {
-                        strcpy_s(result, "공수 유지");
+                    else if ((serverChoice + 2) % 3 == packet.choice_C) {
+                        strcpy_s(result, "공수 유지, 클라이언트 공격중");
                     }
                 }
                 std::cout << "결과: " << result << std::endl;
@@ -262,6 +278,7 @@ int main(int argc, char* argv[]) {
                 packet.winrate = double(howmanywin) / count;
                 double loserate = 1.0 - packet.winrate;
                 send(clientSocket, (char*)&packet, sizeof(Packet), 0);
+                std::cout << std::endl << "<<<<<<<<최종 승률>>>>>>>>" << std::endl;
                 std::cout << "서버의 승률 : " << loserate << std::endl;
                 std::cout << "클라이언트의 승률 : " << packet.winrate << std::endl;
             }
