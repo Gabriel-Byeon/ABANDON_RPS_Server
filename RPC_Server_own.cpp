@@ -1,13 +1,21 @@
+#define _CRT_SECURE_NO_WARNINGS
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 #include <iostream>
 #include <winsock2.h>
 #include <WS2tcpip.h>
 #include <ctime>
+#include "protocol.h"
+
+#define ROCK 0
+#define SCISSORS 1
+#define PAPER 2
+#define WIN_REQUEST 3
+#define END_REQUEST 4
 
 #pragma comment(lib, "ws2_32.lib")
 
 #define SERVERPORT 9000
-#define BUFSIZE 512
+#define BUFSIZE sizeof(Packet)
 
 void err_quit(char* msg)
 {
@@ -73,7 +81,7 @@ int main(int argc, char* argv[]) {
     SOCKET clientSocket;
     SOCKADDR_IN clientaddr;
     int addrlen;
-    char buf[BUFSIZE + 1];
+    Packet packet;
 
     addrlen = sizeof(clientaddr);
     clientSocket = accept(serverSocket, (SOCKADDR*)&clientaddr, &addrlen);
@@ -87,120 +95,140 @@ int main(int argc, char* argv[]) {
         inet_ntoa(clientaddr.sin_addr), ntohs(clientaddr.sin_port));
 
     int retry = 1;
-    int Att = 0, count = 0, game1end = 0, endrequest = 0;
-    int howmanywin = 0, howmanylose = 0;
+    int Att = 0, count = 0;
+    int howmanywin = 0;
 
-    while (true) {
+    std::cout << "묵찌빠 게임을 하시겠습니까?(예(1) / 아니오(0)) : ";
+    recv(clientSocket, (char*)&packet, sizeof(Packet), 0);
+    
+    std::cout << packet.start_game_request << std::endl;
+
+    while (packet.start_game_request) {
         srand(time(NULL));
 
-        while (retry) {
-
+        while (packet.Game_Choose == 0) {
+         
             std::cout << "가위 바위 보 게임을 시작합니다." << std::endl;
-            std::cout << "가위(0), 바위(1), 보(2) 중 하나를 선택하세요: " << std::endl;
+            std::cout << "바위(0), 가위(1), 보(2) 중 하나를 선택하세요(승률(3), 종료(4)): ";
 
             int serverHand = rand() % 3;
-            int clientHand;
-            send(clientSocket, (char*)&serverHand, sizeof(serverHand), 0);
-            recv(clientSocket, (char*)&clientHand, sizeof(clientHand), 0);
+            packet.choice_S = serverHand;
+
+            send(clientSocket, (char*)&packet, sizeof(Packet), 0);
+            recv(clientSocket, (char*)&packet, sizeof(Packet), 0);
+
+            std::cout << packet.choice_C << std::endl;
+
+            if (packet.choice_C == END_REQUEST) {
+                packet.end = 1;
+                break;
+            }
 
             std::cout << "서버가 선택한 것: ";
             if (serverHand == 0) {
-                std::cout << "가위      ";
+                std::cout << "바위      ";
             }
             else if (serverHand == 1) {
-                std::cout << "바위      ";
+                std::cout << "가위      ";
             }
             else if (serverHand == 2) {
                 std::cout << "보      ";
             }
             std::cout << "클라이언트가 선택한 것: ";
-            if (clientHand == 0) {
-                std::cout << "가위";
-            }
-            else if (clientHand == 1) {
+            if (packet.choice_C == 0) {
                 std::cout << "바위";
             }
-            else if (clientHand == 2) {
+            else if (packet.choice_C == 1) {
+                std::cout << "가위";
+            }
+            else if (packet.choice_C == 2) {
                 std::cout << "보";
             }
             std::cout << std::endl;
 
-            if (clientHand == '4') {
-                endrequest = 1;
-                break;
-            }
-            else if (serverHand == clientHand) {
+            if (serverHand == packet.choice_C) {
                 Att = 0;
                 std::cout << "무승부입니다." << std::endl;
-                retry = 1;
-            }
-            else if ((serverHand - 1) % 3 == clientHand) {
-                Att = 1;
-                std::cout << "서버가 이겼습니다." << std::endl;
                 retry = 0;
+            }
+            else if ((serverHand + 1) % 3 == packet.choice_C) {
+                Att = 1;
+                std::cout << "서버가 공격입니다." << std::endl;
+                retry = 1;
             }
             else {
                 Att = -1;
-                std::cout << "클라이언트가 이겼습니다." << std::endl;
-                retry = 0;
+                std::cout << "클라이언트가 공격입니다." << std::endl;
+                retry = 1;
             }
-            send(clientSocket, (char*)&Att, sizeof(Att), 0);
+
+            packet.Att = Att;
+            packet.Game_Choose = retry;
+            send(clientSocket, (char*)&packet, sizeof(Packet), 0);
         }
 
-        game1end = 0;
-        while (!game1end) {
-            int serverChoice = rand() % 3;
-            send(clientSocket, (char*)&serverChoice, sizeof(serverChoice), 0);
+        while (packet.Game_Choose) {
 
-            char clientChoice;
-            recv(clientSocket, &clientChoice, sizeof(clientChoice), 0);
+            std::cout << "묵찌빠 게임을 시작합니다." << std::endl;
+            std::cout << "바위(0), 가위(1), 보(2) 중 하나를 선택하세요(승률(3), 종료(4)): ";
 
-            if (clientChoice == '4') {
-                endrequest = 1;
+            recv(clientSocket, (char*)&packet, sizeof(Packet), 0);
+
+            std::cout << packet.choice_C << std::endl;
+
+            if (packet.choice_C == END_REQUEST) {
+                packet.end = 1;
                 break;
             }
-            else if (clientChoice == '3') {
-                double winrate = static_cast<double>(howmanywin) / count;
-                double loserate = 1.0 - winrate;
-                send(clientSocket, (char*)&winrate, sizeof(winrate), 0);
-                std::cout << "서버의 승률 : " << loserate << std::endl;
-                std::cout << "클라이언트의 승률 : " << winrate << std::endl;
+            else if (packet.choice_C == WIN_REQUEST) {
+                packet.winrate = (double)howmanywin / count;
+                
+                send(clientSocket, (char*)&packet, sizeof(Packet), 0);
+                std::cout << "서버의 승률 : " << 1.0 - packet.winrate << std::endl;
+                std::cout << "클라이언트의 승률 : " << packet.winrate << std::endl;
                 continue;
             }
-            //++a test
             else {
+
+                int serverChoice = rand() % 3;
+                send(clientSocket, (char*)&serverChoice, sizeof(serverChoice), 0);
+
+                packet.choice_S = serverChoice;
+
+                send(clientSocket, (char*)&packet, sizeof(Packet), 0);
+                recv(clientSocket, (char*)&packet, sizeof(Packet), 0);
+
                 std::cout << "서버가 선택한 것: ";
                 if (serverChoice == 0) {
-                    std::cout << "묵      ";
+                    std::cout << "바위      ";
                 }
                 else if (serverChoice == 1) {
-                    std::cout << "찌      ";
+                    std::cout << "가위      ";
                 }
                 else if (serverChoice == 2) {
-                    std::cout << "빠      ";
+                    std::cout << "보      ";
                 }
                 std::cout << "클라이언트가 선택한 것: ";
-                if (clientChoice == '0') {
-                    std::cout << "묵";
+                if (packet.choice_C == 0) {
+                    std::cout << "바위";
                 }
-                else if (clientChoice == '1') {
-                    std::cout << "찌";
+                else if (packet.choice_C == 1) {
+                    std::cout << "가위";
                 }
-                else if (clientChoice == '2') {
-                    std::cout << "빠";
+                else if (packet.choice_C == 2) {
+                    std::cout << "보";
                 }
                 std::cout << std::endl;
 
                 char result[50];
 
-                if (Att == 1) {
-                    if (serverChoice == (clientChoice - '0')) {
+                if (packet.Att == 1) {
+                    if (serverChoice == packet.choice_C) {
                         strcpy_s(result, "서버 승리! 클라이언트 패배!");
-                        game1end = 1;
-                        retry = 1;
-                        count += 1;
+                        packet.Game_Choose = 0;
+                        count++;
                     }
-                    else if ((serverChoice + 1) % 3 == (clientChoice - '0')) {
+                    else if ((serverChoice + 1) % 3 == packet.choice_C) {
                         strcpy_s(result, "공수 유지");
                     }
                     else {
@@ -208,46 +236,47 @@ int main(int argc, char* argv[]) {
                         Att = -1;
                     }
                 }
-                else if (Att == -1) {
-                    if (serverChoice == (clientChoice - '0')) {
+                else if (packet.Att == -1) {
+                    if (serverChoice == packet.choice_C) {
                         strcpy_s(result, "서버 패배! 클라이언트 승리!");
-                        game1end = 1;
-                        retry = 1;
+                        packet.Game_Choose = 0;
                         howmanywin++;
-                        count += 1;
+                        count++;
                     }
-                    else if ((serverChoice + 1) % 3 == (clientChoice - '0')) {
+                    else if ((serverChoice + 1) % 3 == packet.choice_C) {
                         strcpy_s(result, "공수 교대");
                         Att = 1;
                     }
-                    else {
+                    else if ((serverChoice - 1) % 3 == packet.choice_C) {
                         strcpy_s(result, "공수 유지");
                     }
                 }
                 std::cout << "결과: " << result << std::endl;
+                strcpy((char*)& packet.result_str, result);
 
-                send(clientSocket, result, sizeof(result), 0);
+                send(clientSocket, (char*)&packet, sizeof(Packet), 0);
             }
         }
-        if (endrequest == 1) {
+        if (packet.end == 1) {
             if (count > 0) {
-                double winrate = static_cast<double>(howmanywin) / count;
-                double loserate = 1.0 - winrate;
-                send(clientSocket, (char*)&winrate, sizeof(winrate), 0);
+                packet.winrate = double(howmanywin) / count;
+                double loserate = 1.0 - packet.winrate;
+                send(clientSocket, (char*)&packet, sizeof(Packet), 0);
                 std::cout << "서버의 승률 : " << loserate << std::endl;
-                std::cout << "클라이언트의 승률 : " << winrate << std::endl;
+                std::cout << "클라이언트의 승률 : " << packet.winrate << std::endl;
             }
-            std::cout << "프로그램을 종료합니다" << std::endl;
             break;
         }
         else {
             continue;
         }
+
+        closesocket(clientSocket);
+        closesocket(serverSocket);
+        WSACleanup();
+
+        return 0;
     }
-
-    closesocket(clientSocket);
-    closesocket(serverSocket);
-    WSACleanup();
-
+    std::cout << std::endl << "프로그램을 종료하겠습니다." << std::endl;
     return 0;
 }
