@@ -130,6 +130,7 @@ int main(int argc, char* argv[]) {
                     packet.winrate = (double)howmanywin / count;
 
                     send(clientSocket, (char*)&packet, sizeof(Packet), 0);
+                    std::cout << std::endl << "<<<<½Â·ü Ãâ·Â>>>>" << std::endl;
                     std::cout << std::endl << "¼­¹öÀÇ ½Â·ü : " << 1.0 - packet.winrate << std::endl;
                     std::cout << std::endl << "Å¬¶óÀÌ¾ðÆ®ÀÇ ½Â·ü : " << packet.winrate << std::endl;
                     continue;
@@ -199,6 +200,7 @@ int main(int argc, char* argv[]) {
                     packet.winrate = (double)howmanywin / count;
 
                     send(clientSocket, (char*)&packet, sizeof(Packet), 0);
+                    std::cout << std::endl << "<<<<½Â·ü Ãâ·Â>>>>" << std::endl;
                     std::cout << std::endl << "¼­¹öÀÇ ½Â·ü : " << 1.0 - packet.winrate << std::endl;
                     std::cout << std::endl << "Å¬¶óÀÌ¾ðÆ®ÀÇ ½Â·ü : " << packet.winrate << std::endl;
                     continue;
