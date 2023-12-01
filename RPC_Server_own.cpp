@@ -1,22 +1,23 @@
-#define _CRT_SECURE_NO_WARNINGS
-#define _WINSOCK_DEPRECATED_NO_WARNINGS
-#include <iostream>
-#include <winsock2.h>
+#define _CRT_SECURE_NO_WARNINGS //strcpy 함수의 크기 설정 오류 출력을 없애기 위해
+#define _WINSOCK_DEPRECATED_NO_WARNINGS // 최신 VC++ 컴파일 시 경고 방지
+#include <iostream> // 입출력을 사용하기 위함
+#include <winsock2.h>   // 소켓을 사용하기 위한 헤더 파일, API에서 사용하는 상수, 데이터 유형 및 함수 프로토타입 정의
 #include <WS2tcpip.h>
 #include <ctime>
-#include "protocol.h"
+#include "protocol.h"   // 프로토콜 헤더 파일
 
-#define ROCK 0
+#define ROCK 0              // 
 #define SCISSORS 1
 #define PAPER 2
 #define WIN_REQUEST 3
 #define END_REQUEST 4
 
-#pragma comment(lib, "ws2_32.lib")
+#pragma comment(lib, "ws2_32.lib")  // 아래에서 선언한 헤더파일들을 가져다 쓰기위한 링크, ws2_32.lib 라이브러리 파일을 프로그램에 링크하도록 컴파일러에 알리는 pragma 지시어
 
 #define SERVERPORT 9000
 #define BUFSIZE sizeof(Packet)
 
+// 소켓 함수 오류 출력 후 종료
 void err_quit(char* msg)
 {
     LPVOID lpMsgBuf;
@@ -30,6 +31,7 @@ void err_quit(char* msg)
     exit(1);
 }
 
+// 소켓 함수 오류 출력
 void err_display(char* msg)
 {
     LPVOID lpMsgBuf;
@@ -108,7 +110,7 @@ int main(int argc, char* argv[]) {
 
         while (packet.Game_Choose == 0) {
          
-            std::cout << "가위 바위 보 게임을 시작합니다." << std::endl;
+            std::cout << std::endl << "가위 바위 보 게임을 시작합니다." << std::endl;
             std::cout << "바위(0), 가위(1), 보(2) 중 하나를 선택하세요(승률(3), 종료(4)): ";
 
             int serverHand = rand() % 3;
@@ -128,32 +130,32 @@ int main(int argc, char* argv[]) {
                     packet.winrate = (double)howmanywin / count;
 
                     send(clientSocket, (char*)&packet, sizeof(Packet), 0);
-                    std::cout << "서버의 승률 : " << 1.0 - packet.winrate << std::endl;
-                    std::cout << "클라이언트의 승률 : " << packet.winrate << std::endl;
+                    std::cout << std::endl << "서버의 승률 : " << 1.0 - packet.winrate << std::endl;
+                    std::cout << std::endl << "클라이언트의 승률 : " << packet.winrate << std::endl;
                     continue;
                 }
-                std::cout << "아직 한 판도 안하셨습니다." << std::endl;
+                std::cout << std::endl << "아직 한 판도 안하셨습니다." << std::endl;
                 continue;
             }
 
             std::cout << "서버가 선택한 것: ";
-            if (serverHand == 0) {
+            if (serverHand == ROCK) {
                 std::cout << "바위      ";
             }
-            else if (serverHand == 1) {
+            else if (serverHand == SCISSORS) {
                 std::cout << "가위      ";
             }
-            else if (serverHand == 2) {
+            else if (serverHand == PAPER) {
                 std::cout << "보      ";
             }
             std::cout << "클라이언트가 선택한 것: ";
-            if (packet.choice_C == 0) {
+            if (packet.choice_C == ROCK) {
                 std::cout << "바위";
             }
-            else if (packet.choice_C == 1) {
+            else if (packet.choice_C == SCISSORS) {
                 std::cout << "가위";
             }
-            else if (packet.choice_C == 2) {
+            else if (packet.choice_C == PAPER) {
                 std::cout << "보";
             }
             std::cout << std::endl;
@@ -181,7 +183,7 @@ int main(int argc, char* argv[]) {
 
         while (packet.Game_Choose) {
 
-            std::cout << "묵찌빠 게임을 시작합니다." << std::endl;
+            std::cout << std::endl << "묵찌빠 게임을 시작합니다." << std::endl;
             std::cout << "바위(0), 가위(1), 보(2) 중 하나를 선택하세요(승률(3), 종료(4)): ";
 
             recv(clientSocket, (char*)&packet, sizeof(Packet), 0);
@@ -197,11 +199,11 @@ int main(int argc, char* argv[]) {
                     packet.winrate = (double)howmanywin / count;
 
                     send(clientSocket, (char*)&packet, sizeof(Packet), 0);
-                    std::cout << "서버의 승률 : " << 1.0 - packet.winrate << std::endl;
-                    std::cout << "클라이언트의 승률 : " << packet.winrate << std::endl;
+                    std::cout << std::endl << "서버의 승률 : " << 1.0 - packet.winrate << std::endl;
+                    std::cout << std::endl << "클라이언트의 승률 : " << packet.winrate << std::endl;
                     continue;
                 }
-                std::cout << "아직 한 판도 안하셨습니다." << std::endl;
+                std::cout << std::endl << "아직 한 판도 안하셨습니다." << std::endl;
                 continue;
             }
             else {
@@ -215,23 +217,23 @@ int main(int argc, char* argv[]) {
                 recv(clientSocket, (char*)&packet, sizeof(Packet), 0);
 
                 std::cout << "서버가 선택한 것: ";
-                if (serverChoice == 0) {
+                if (serverChoice == ROCK) {
                     std::cout << "바위      ";
                 }
-                else if (serverChoice == 1) {
+                else if (serverChoice == SCISSORS) {
                     std::cout << "가위      ";
                 }
-                else if (serverChoice == 2) {
+                else if (serverChoice == PAPER) {
                     std::cout << "보      ";
                 }
                 std::cout << "클라이언트가 선택한 것: ";
-                if (packet.choice_C == 0) {
+                if (packet.choice_C == ROCK) {
                     std::cout << "바위";
                 }
-                else if (packet.choice_C == 1) {
+                else if (packet.choice_C == SCISSORS) {
                     std::cout << "가위";
                 }
-                else if (packet.choice_C == 2) {
+                else if (packet.choice_C == PAPER) {
                     std::cout << "보";
                 }
                 std::cout << std::endl;
@@ -239,7 +241,7 @@ int main(int argc, char* argv[]) {
                 char result[50];
                 if (packet.Att == 1) {
                     if (serverChoice == packet.choice_C) {
-                        strcpy_s(result, "서버 승리! 클라이언트 패배!");
+                        strcpy(result, "서버 승리! 클라이언트 패배!");
                         packet.Game_Choose = 0;
                         count++;
                     }
@@ -248,26 +250,26 @@ int main(int argc, char* argv[]) {
 
                     }
                     else if ((serverChoice + 2) % 3 == packet.choice_C) {
-                        strcpy_s(result, "공수 교대, 클라이언트 공격");
+                        strcpy(result, "공수 교대, 클라이언트 공격");
                         packet.Att = -1;
                     }
                 }
                 else if (packet.Att == -1) {
                     if (serverChoice == packet.choice_C) {
-                        strcpy_s(result, "서버 패배! 클라이언트 승리!");
+                        strcpy(result, "서버 패배! 클라이언트 승리!");
                         packet.Game_Choose = 0;
                         howmanywin++;
                         count++;
                     }
                     else if ((serverChoice + 1) % 3 == packet.choice_C) {
-                        strcpy_s(result, "공수 교대, 서버 공격");
+                        strcpy(result, "공수 교대, 서버 공격");
                         packet.Att = 1;
                     }
                     else if ((serverChoice + 2) % 3 == packet.choice_C) {
-                        strcpy_s(result, "공수 유지, 클라이언트 공격중");
+                        strcpy(result, "공수 유지, 클라이언트 공격중");
                     }
                 }
-                std::cout << "결과: " << result << std::endl;
+                std::cout << std::endl << "결과: " << result << std::endl;
                 strcpy((char*)& packet.result_str, result);
 
                 send(clientSocket, (char*)&packet, sizeof(Packet), 0);
